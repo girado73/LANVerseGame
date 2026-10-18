@@ -166,11 +166,17 @@ Asks for the Lua package of the current match (`mode` answer below).
 { "type": "event", "event": "player_died",   "player_id": "p-18", "killer": "p-17" }
 { "type": "event", "event": "item_picked",   "player_id": "p-17", "item_id": "i-9" }
 { "type": "event", "event": "score_changed", "player_id": "p-17", "score": 4, "team": "red" }
-{ "type": "event", "event": "mode_log",      "mode_id": "coin_rush", "level": "log", "message": "…" }
-{ "type": "event", "event": "mode_error",    "mode_id": "coin_rush", "message": "…" }
+{ "type": "event", "event": "mode_log",       "mode_id": "coin_rush", "level": "log", "message": "…" }
+{ "type": "event", "event": "mode_log_clear", "mode_id": "coin_rush" }
+{ "type": "event", "event": "mode_error",     "mode_id": "coin_rush", "message": "…" }
 ```
 
 `killer` is `"mode"` when a script removed the HP.
+
+`mode_log_clear` comes from `lb.log_clear()`: the client drops every line of
+that mode's console. It is sent after the `mode_log` frames of the same tick,
+so lines logged before the call are shown and then removed. Additive event –
+clients that do not know it ignore it.
 
 ### `round_state`
 

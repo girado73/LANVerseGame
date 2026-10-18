@@ -57,6 +57,8 @@ pub enum SimulationEvent {
         score: i64,
         team: Option<String>,
     },
+    /// A mode script asked clients to discard its console (`lb.log_clear()`).
+    ModeLogClear,
 }
 
 impl SimulationEvent {
@@ -69,6 +71,7 @@ impl SimulationEvent {
             Self::PlayerDied { .. } => "player_died",
             Self::ItemPicked { .. } => "item_picked",
             Self::ScoreChanged { .. } | Self::ScoreSet { .. } => "score_changed",
+            Self::ModeLogClear => "mode_log_clear",
         }
     }
 
@@ -82,6 +85,7 @@ impl SimulationEvent {
             Self::ItemPicked { .. } => "ItemPicked",
             Self::ScoreChanged { .. } => "ScoreChanged",
             Self::ScoreSet { .. } => "ScoreSet",
+            Self::ModeLogClear => "ModeLogClear",
         }
     }
 
@@ -141,6 +145,7 @@ impl SimulationEvent {
                     frame.insert("team".into(), Value::from(team.clone()));
                 }
             }
+            Self::ModeLogClear => {}
         }
 
         frame

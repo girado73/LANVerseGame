@@ -109,6 +109,7 @@ Postgres (live versions only) → built-in game.
 | Function | Result |
 |---|---|
 | `lb.log(msg)`, `lb.warn(msg)`, `print(…)` | mode console (`mode_log` events) |
+| `lb.log_clear()` | clears the console on every client (`mode_log_clear`) |
 | `lb.tick()`, `lb.time()`, `lb.tick_rate()` | match clock |
 | `lb.world()` | `{width, height}` |
 | `lb.players()`, `lb.player(id)` | `{id, name, x, y, hp, max_hp, score, team, is_bot}` |
@@ -128,7 +129,8 @@ Postgres (live versions only) → built-in game.
 ```
 
 `markers` is absent in Deathmatch. Events from a mode: `mode_log`
-(`{mode_id, level, message}`) and `mode_error` (`{mode_id, message}`).
+(`{mode_id, level, message}`), `mode_log_clear` (`{mode_id}`) and `mode_error`
+(`{mode_id, message}`).
 
 ## Differences from the former server
 

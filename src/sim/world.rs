@@ -86,6 +86,8 @@ pub struct World<S: ScriptEngine = crate::lua::runtime::LuaScript> {
 
     /// Intents collected while a hook runs; applied once it returned.
     collected: LuaEffects,
+    /// `lb.log_clear()` seen during the current hook.
+    log_clear_this_hook: bool,
     /// Set when a script queued an HP change; score requests after it are
     /// ignored in the same hook (reference behaviour, see `queue_score`).
     hp_queued_this_hook: bool,
@@ -160,6 +162,7 @@ impl<S: ScriptEngine> World<S> {
             markers: Vec::new(),
             marker_ids: MarkerSequence::new(),
             collected: LuaEffects::default(),
+            log_clear_this_hook: false,
             hp_queued_this_hook: false,
             noclip_player: None,
             mode_countdown_ms: 3_000,
@@ -369,6 +372,16 @@ impl<S: ScriptEngine> World<S> {
             text: truncate_chars(text, 500),
             tick: self.tick,
         });
+    }
+
+    /// Asks clients to discard the script console (`lb.log_clear()`).
+    ///
+    /// The lines a client shows are already drained and broadcast, so this is
+    /// an event like a score change. It is queued in `pending_events`, which
+    /// keeps the order: everything logged before the clear in the same tick
+    /// still reaches the client first.
+    pub fn clear_lua_log(&mut self) {
+        self.pending_events.push(SimulationEvent::ModeLogClear);
     }
 
     pub fn drain_lua_logs(&mut self) -> Vec<LuaLogEntry> {
@@ -656,6 +669,7 @@ impl<S: ScriptEngine> World<S> {
         };
 
         self.collected = LuaEffects::default();
+        self.log_clear_this_hook = false;
         self.hp_queued_this_hook = false;
 
         // The engine may erase the handle's lifetime (Lua callbacks must be
@@ -689,6 +703,10 @@ impl<S: ScriptEngine> World<S> {
 
         let effects = std::mem::take(&mut self.collected);
         self.apply_lua_effects(&effects);
+
+        if std::mem::take(&mut self.log_clear_this_hook) {
+            self.clear_lua_log();
+        }
         self.report_script_failure();
     }
 
@@ -1368,6 +1386,12 @@ impl<S: ScriptEngine> ScriptHost for WorldView<'_, S> {
     fn log(&mut self, level: &str, text: &str) {
         ScriptHost::log(self.world, level, text)
     }
+
+    fn log_clear(&mut self) {
+        // Collects on the same effect set the world applies after the hook.
+        ScriptHost::log_clear(self.world)
+    }
+
     fn random_int(&mut self, min: i64, max: i64) -> i64 {
         ScriptHost::random_int(self.world, min, max)
     }
@@ -1486,6 +1510,14 @@ impl<S: ScriptEngine> ScriptHost for World<S> {
 
     fn log(&mut self, level: &str, text: &str) {
         World::lua_log(self, level, text);
+    }
+
+    fn log_clear(&mut self) {
+        // Collected on the world, not on the engine's effect set: the runtime
+        // hands out a fresh set after every hook, which would drop the flag.
+        // `run_hook` emits the event once the hook returned, so lines logged
+        // before the clear still reach the client first.
+        self.log_clear_this_hook = true;
     }
 
     fn random_int(&mut self, min: i64, max: i64) -> i64 {

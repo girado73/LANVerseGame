@@ -67,6 +67,17 @@ pub fn install(lua: &Lua, cell: &HostCell) -> mlua::Result<Table> {
     {
         let cell = cell.clone();
         api.set(
+            "log_clear",
+            lua.create_function(move |_, ()| {
+                host(&cell).log_clear();
+                Ok(())
+            })?,
+        )?;
+    }
+
+    {
+        let cell = cell.clone();
+        api.set(
             "warn",
             lua.create_function(move |_, message: Option<Value>| {
                 let text = to_text(message.as_ref());

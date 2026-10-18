@@ -373,6 +373,18 @@ pub fn mode_log(mode_id: &str, level: &str, message: &str) -> Value {
     })
 }
 
+/// `lb.log_clear()`: drop the mode console on the client.
+///
+/// Additive: clients that do not know `mode_log_clear` ignore it, like any
+/// unknown event.
+pub fn mode_log_clear(mode_id: &str) -> Value {
+    json!({
+        "type": "event",
+        "event": "mode_log_clear",
+        "mode_id": mode_id,
+    })
+}
+
 pub fn mode_error(mode_id: &str, message: &str) -> Value {
     json!({
         "type": "event",

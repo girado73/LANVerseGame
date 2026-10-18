@@ -35,6 +35,8 @@ pub struct LuaEffects {
     pub markers: Vec<MarkerEffect>,
     pub removed_markers: Vec<i64>,
     pub clear_markers: bool,
+    /// `lb.log_clear()`: clients discard the script console of this mode.
+    pub clear_logs: bool,
     /// Absolute score set by `lb.set_score` folded into `scores`.
     pub winner: Option<String>,
 }
@@ -48,6 +50,7 @@ impl LuaEffects {
             && self.markers.is_empty()
             && self.removed_markers.is_empty()
             && !self.clear_markers
+            && !self.clear_logs
             && self.winner.is_none()
     }
 }
@@ -115,6 +118,13 @@ pub trait ScriptHost {
     /// N markers in one tick cannot share an id.
     fn reserve_marker_id(&mut self) -> i64;
     fn log(&mut self, level: &str, text: &str);
+    /// `lb.log_clear()`: ask clients to discard the mode console.
+    ///
+    /// The host collects this in the world (not in [`LuaEffects`]): the runtime
+    /// replaces the engine's effect set after every hook. The world turns it
+    /// into a `mode_log_clear` event once the hook returned, so lines logged
+    /// before the call still arrive first.
+    fn log_clear(&mut self);
     /// Next `lb.random(min, max)` value (inclusive).
     fn random_int(&mut self, min: i64, max: i64) -> i64;
     /// Name of the marker picking kind (`spawn_marker` 4th argument).
@@ -202,5 +212,11 @@ mod tests {
             ..LuaEffects::default()
         };
         assert!(!removed.is_empty());
+
+        let logs = LuaEffects {
+            clear_logs: true,
+            ..LuaEffects::default()
+        };
+        assert!(!logs.is_empty());
     }
 }

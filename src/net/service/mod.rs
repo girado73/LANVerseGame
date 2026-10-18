@@ -617,11 +617,29 @@ impl GameService {
             world.advance();
 
             let events = world.drain_events();
+            let clears_log = events
+                .iter()
+                .any(|event| matches!(event, SimulationEvent::ModeLogClear));
             for event in &events {
                 self.broadcast(&match_id, protocol::event(event));
             }
 
             self.dispatch_script_diagnostics(&match_id);
+
+            // The mode console is cleared after the lines of this tick, so the
+            // client sees them appear and then drops them.
+            if clears_log {
+                let package_id = self
+                    .worlds
+                    .get(&match_id)
+                    .and_then(|world| world.script.as_ref())
+                    .map_or_else(
+                        || "mode".to_owned(),
+                        |script| script.package_id().to_owned(),
+                    );
+                let frame = protocol::mode_log_clear(&package_id);
+                self.broadcast(&match_id, frame);
+            }
 
             if let Some(world) = self.worlds.get(&match_id)
                 && world.tick % self.config.ticks_per_snapshot == 0
