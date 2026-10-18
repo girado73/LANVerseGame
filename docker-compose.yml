@@ -1,0 +1,49 @@
+# Local development database (and Redis, which is harmless to have running).
+#
+#   docker compose up -d
+#
+# Then point the server at it:
+#
+#   export LANBASH_DATABASE_URL=postgres://lanverse:lanverse@127.0.0.1:5432/lanverse
+#   export LANBASH_REDIS_URL=redis://127.0.0.1:6379/2
+#   cargo run -- serve
+#
+# The schema is applied automatically on start (or `cargo run -- migrate`).
+# The password is a local-only default; override with POSTGRES_PASSWORD.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: lanverse-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lanverse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lanverse}
+      POSTGRES_DB: ${POSTGRES_DB:-lanverse}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - lanverse-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: lanverse-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - lanverse-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  lanverse-pgdata:
+  lanverse-redisdata:

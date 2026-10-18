@@ -38,6 +38,23 @@ export LANBASH_ADMIN_KEY=$(openssl rand -hex 16)
 cargo run --release -- serve
 ```
 
+### Local database via Docker
+
+`docker-compose.yml` brings up Postgres 17 and Redis with local-only
+credentials, and `dev-up.sh` starts it and runs the server with the matching
+URLs:
+
+```sh
+cp .env.example .env        # optional, dev-up.sh falls back to the same defaults
+./dev-up.sh                 # = docker compose up -d + cargo run -- serve
+docker compose down         # stop; add -v to also drop the volumes
+```
+
+The Postgres URL it exports is
+`postgres://lanverse:lanverse@127.0.0.1:5432/lanverse` (user/password/db
+override via `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`; port via
+`POSTGRES_PORT`).
+
 Then play with the client:
 
 ```sh
