@@ -1,0 +1,6 @@
+/target/
+# Embedded Postgres clusters used by the database/HTTP/admin tests.
+/target/pg-embed-*/
+.env
+.env.local
+*.log

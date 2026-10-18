@@ -1,0 +1,63 @@
+[package]
+name = "lanverse_game"
+version = "0.1.0"
+edition = "2024"
+description = "LAN Verse game server: authoritative simulation, Lua modes, WebSocket transport, REST control plane"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+anyhow = "1"
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
+argon2 = "0.6"
+password-hash = { version = "0.6", features = ["rand_core"] }
+bcrypt = "0.17"
+axum = { version = "0.8", features = ["ws", "macros"] }
+base64 = "0.22"
+chrono = { version = "0.4", features = ["serde"] }
+hmac = "0.13"
+html-escape = "0.2"
+mlua = { version = "0.12", features = ["lua54", "vendored", "send"] }
+rand = "0.9"
+rand_chacha = "0.9"
+redis = { version = "1", default-features = false, features = ["tokio-comp"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+sha2 = "0.11"
+sqlx = { version = "0.9", default-features = false, features = [
+    "runtime-tokio",
+    "tls-rustls-ring",
+    "postgres",
+    "mysql",
+    "chrono",
+    "json",
+    "uuid",
+    "migrate",
+    "macros",
+] }
+subtle = "2"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+uuid = { version = "1", features = ["v4", "v7", "serde"] }
+ulid = "1"
+
+[dev-dependencies]
+async-trait = "0.1"
+pg-embed = "1.0"
+mysql_async = { version = "0.36", default-features = false, features = [
+    "minimal-rust",
+] }
+tokio-tungstenite = "0.30"
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
