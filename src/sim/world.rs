@@ -189,7 +189,7 @@ impl<S: ScriptEngine> World<S> {
     pub fn inert(match_id: impl Into<String>) -> Self {
         Self::new(
             match_id,
-            SimulationConfig::from_parts(60, 20, 8, 30, crate::config::GameplayConfig::inert()),
+            SimulationConfig::from_parts(64, 64, 8, 30, crate::config::GameplayConfig::inert()),
         )
     }
 
@@ -224,6 +224,10 @@ impl<S: ScriptEngine> World<S> {
             .and_then(|index| self.players.get(*index))
     }
 
+    pub fn marker(&self, id: i64) -> Option<&Marker> {
+        self.markers.iter().find(|x| x.id == id)
+    }
+
     pub fn player_mut(&mut self, id: &str) -> Option<&mut PlayerState> {
         match self.player_index.get(id) {
             Some(index) => self.players.get_mut(*index),
@@ -237,6 +241,60 @@ impl<S: ScriptEngine> World<S> {
 
     pub fn player_count(&self) -> usize {
         self.players.len()
+    }
+
+    pub fn player_sees_player(&self, watcher_id: &str, watched_id: &str) -> bool {
+        let (Some(watcher), Some(watched)) = (
+            World::player(self, watcher_id),
+            World::player(self, watched_id),
+        ) else {
+            return false;
+        };
+
+        let dx = watched.x - watcher.x;
+        let dy = watched.y - watcher.y;
+        let distance = dx.hypot(dy);
+        let facing_length = watcher.facing_x.hypot(watcher.facing_y);
+
+        if !distance.is_finite()
+            || distance == 0.0
+            || !facing_length.is_finite()
+            || facing_length <= 0.0
+        {
+            return false;
+        }
+
+        let alignment = (dx / distance) * (watcher.facing_x / facing_length)
+            + (dy / distance) * (watcher.facing_y / facing_length);
+
+        alignment >= 22.5_f64.to_radians().cos()
+    }
+
+    pub fn player_sees_marker(&self, player_id: &str, marker_id: i64) -> bool {
+        let (Some(player), Some(marker)) = (
+            World::player(self, player_id),
+            World::marker(self, marker_id),
+        ) else {
+            return false;
+        };
+
+        let dx = marker.x - player.x;
+        let dy = marker.y - player.y;
+        let distance = dx.hypot(dy);
+        let facing_length = player.facing_x.hypot(player.facing_y);
+
+        if !distance.is_finite()
+            || distance == 0.0
+            || !facing_length.is_finite()
+            || facing_length <= 0.0
+        {
+            return false;
+        }
+
+        let alignment = (dx / distance) * (player.facing_x / facing_length)
+            + (dy / distance) * (player.facing_y / facing_length);
+
+        alignment >= 22.5_f64.to_radians().cos()
     }
 
     pub fn is_empty(&self) -> bool {
@@ -1374,9 +1432,25 @@ impl<S: ScriptEngine> ScriptHost for WorldView<'_, S> {
     fn find_player(&self, id: &str) -> Option<PlayerView> {
         ScriptHost::find_player(&*self.world, id)
     }
+
+    fn find_marker(&self, id: i64) -> Option<&Marker> {
+        ScriptHost::find_marker(&*self.world, id)
+    }
+
+    fn player_sees_player(&self, watcher_id: &str, watched_id: &str) -> bool {
+        ScriptHost::player_sees_player(&*self.world, watcher_id, watched_id)
+    }
+    fn player_sees_marker(&self, player_id: &str, marker_id: i64) -> bool {
+        ScriptHost::player_sees_marker(&*self.world, player_id, marker_id)
+    }
     fn resolved_id(&self, id: &str) -> String {
         ScriptHost::resolved_id(&*self.world, id)
     }
+
+    fn resolved_marker_id(&self, id: i64) -> i64 {
+        ScriptHost::resolved_marker_id(&*self.world, id)
+    }
+
     fn markers(&self) -> Vec<Marker> {
         ScriptHost::markers(&*self.world)
     }
@@ -1496,8 +1570,28 @@ impl<S: ScriptEngine> ScriptHost for World<S> {
         self.players.first().map(player_view)
     }
 
+    fn find_marker(&self, id: i64) -> Option<&Marker> {
+        World::markers(self).iter().find(|marker| marker.id == id)
+    }
+
+    fn player_sees_player(&self, watcher_id: &str, watched_id: &str) -> bool {
+        let watcher = self.resolved_id(watcher_id);
+        let watched = self.resolved_id(watched_id);
+        World::player_sees_player(self, &watcher, &watched)
+    }
+
+    fn player_sees_marker(&self, player_id: &str, marker_id: i64) -> bool {
+        let player = self.resolved_id(player_id);
+        let marker = self.resolved_marker_id(marker_id);
+        World::player_sees_marker(self, &player, marker)
+    }
+
     fn resolved_id(&self, id: &str) -> String {
         ScriptHost::find_player(self, id).map_or_else(|| id.to_owned(), |player| player.id)
+    }
+
+    fn resolved_marker_id(&self, id: i64) -> i64 {
+        ScriptHost::find_marker(self, id).map_or_else(|| id.to_owned(), |marker| marker.id)
     }
 
     fn markers(&self) -> Vec<Marker> {

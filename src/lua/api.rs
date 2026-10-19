@@ -164,6 +164,40 @@ pub fn install(lua: &Lua, cell: &HostCell) -> mlua::Result<Table> {
     {
         let cell = cell.clone();
         api.set(
+            "player_sees_player",
+            lua.create_function(
+                move |_, (watcher, watched): (Option<Value>, Option<Value>)| {
+                    let (Some(watcher), Some(watched)) =
+                        (text_arg(watcher.as_ref()), text_arg(watched.as_ref()))
+                    else {
+                        return Ok(false);
+                    };
+
+                    Ok(host(&cell).player_sees_player(&watcher, &watched))
+                },
+            )?,
+        )?;
+    }
+
+    {
+        let cell = cell.clone();
+        api.set(
+            "player_sees_marker",
+            lua.create_function(move |_, (player, marker): (Option<Value>, Option<Value>)| {
+                let (Some(player), Some(marker)) =
+                    (text_arg(player.as_ref()), integer_arg(marker.as_ref()))
+                else {
+                    return Ok(false);
+                };
+
+                Ok(host(&cell).player_sees_marker(&player, marker))
+            })?,
+        )?;
+    }
+
+    {
+        let cell = cell.clone();
+        api.set(
             "set_position",
             lua.create_function(
                 move |_, (id, x, y): (Option<Value>, Option<Value>, Option<Value>)| {

@@ -112,7 +112,13 @@ pub trait ScriptHost {
     fn player(&self, id: &str) -> Option<PlayerView>;
     /// Resolve a script id including the builder aliases `p-local` / `p-me`.
     fn find_player(&self, id: &str) -> Option<PlayerView>;
+    fn find_marker(&self, id: i64) -> Option<&Marker>;
+    /// Check if player 1 sees player 2
+    fn player_sees_player(&self, watcher_id: &str, watched_id: &str) -> bool;
+    /// Check if player sees marker
+    fn player_sees_marker(&self, player_id: &str, marker_id: i64) -> bool;
     fn resolved_id(&self, id: &str) -> String;
+    fn resolved_marker_id(&self, id: i64) -> i64;
     fn markers(&self) -> Vec<Marker>;
     /// Reserve an id for a `spawn_marker` call; the world keeps the counter so
     /// N markers in one tick cannot share an id.
