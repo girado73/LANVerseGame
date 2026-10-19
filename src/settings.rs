@@ -47,8 +47,8 @@ impl Settings {
         };
 
         let simulation = SimulationConfig::from_parts(
-            integer("LANBASH_TICK_RATE", 60),
-            integer("LANBASH_SNAPSHOT_RATE", 20),
+            integer("LANBASH_TICK_RATE", 64),
+            integer("LANBASH_SNAPSHOT_RATE", 64), // sollte genau gleich mit Tick_Rate sein
             integer("LANBASH_MAX_PLAYERS", 512),
             integer("LANBASH_MAX_CATCHUP_TICKS", 30),
             gameplay,
@@ -147,8 +147,8 @@ mod tests {
     fn defaults_match_the_reference_server() {
         let settings = Settings::from_env();
 
-        assert_eq!(settings.simulation.tick_rate, 60);
-        assert_eq!(settings.simulation.snapshot_rate, 20);
+        assert_eq!(settings.simulation.tick_rate, 64);
+        assert_eq!(settings.simulation.snapshot_rate, 64);
         assert_eq!(settings.simulation.max_players, 512);
         assert_eq!(settings.simulation.gameplay.world.width, 3200.0);
         assert_eq!(settings.simulation.gameplay.round.duration_ms, 180_000);
