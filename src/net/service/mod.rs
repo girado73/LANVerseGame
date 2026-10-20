@@ -560,6 +560,7 @@ impl GameService {
     pub fn tick(&mut self, now: i64) -> i64 {
         if !self.worlds.values().any(|world| !world.is_empty()) {
             self.sweep_idle_connections(now);
+            self.reap_empty_worlds();
             return 0;
         }
 
