@@ -54,6 +54,14 @@ impl Settings {
             gameplay,
         );
 
+        if simulation.tick_rate != simulation.snapshot_rate {
+            tracing::warn!(
+                "Tick rate and snapshot rate are not equal. TickRate: {}, SnapshotRate: {}",
+                simulation.tick_rate,
+                simulation.snapshot_rate
+            );
+        }
+
         let realtime = RealtimeConfig {
             protocol_version: integer("LANBASH_PROTOCOL_VERSION", 1),
             default_match: text("LANBASH_DEFAULT_MATCH", "lan"),
